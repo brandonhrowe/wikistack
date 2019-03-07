@@ -16,7 +16,7 @@ const Page = db.define("page", {
   slug:
   {
     type: Sequelize.STRING,
-    // validate:{isUrl: true},
+    validate:{isUrl: true},
     allowNull: false
   },
   content: {
@@ -41,6 +41,7 @@ const User = db.define("user", {
   }
 })
 
+Page.belongsTo(User, { as: 'author' });
 
 
 

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { addPage, wikiPage, main } = require("../views");
-const { Page } = require("../models");
+const { Page, User } = require("../models");
 
 router.get("/", async (req, res, next) => {
   try {
@@ -13,23 +13,33 @@ router.get("/", async (req, res, next) => {
 });
 
 router.post("/", async (req, res, next) => {
-
+  // const page = new Page({
+  //   title: req.body.title,
+  //   slug: req.body.slug,
+  //   content: req.body.content,
+  //   status: req.body.status
+  // });
   function generateSlug(title) {
     return title.replace(/\s+/g, "_").replace(/\W/g, "");
   }
 
-  Page.beforeValidate((userInstance, optionsObject) => {
-    userInstance.slug = generateSlug(userInstance.title).toLowerCase();
-  });
-
-  const page = new Page({
-    title: req.body.title,
-    slug: req.body.slug,
-    content: req.body.content,
-    status: req.body.status
-  });
   try {
-    await page.save();
+    Page.beforeValidate((userInstance, optionsObject) => {
+      userInstance.slug = generateSlug(userInstance.title).toLowerCase();
+    });
+
+    const [user, wasCreated] = await User.findOrCreate({
+      where: {
+        name: req.body.name,
+        email: req.body.email
+      }
+    });
+
+    const page = await Page.create(req.body);
+
+    page.setAuthor(user);
+
+    // await page.save();
     res.redirect(`/wiki/${page.slug}`);
   } catch (error) {
     next(error);
