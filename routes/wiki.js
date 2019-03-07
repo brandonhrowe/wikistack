@@ -1,26 +1,38 @@
 const express = require("express");
 const router = express.Router();
-const { addPage } = require("../views");
-const { Page } = require("../models")
+const { addPage, wikiPage, main } = require("../views");
+const { Page } = require("../models");
 
-router.get("/", (req, res, next) => {
-  res.send("GET /wiki");
+router.get("/", async (req, res, next) => {
+  try {
+    const mainPage = await Page.findAll();
+    res.send(main(mainPage));
+  } catch (error) {
+    next(error);
+  }
 });
 
 router.post("/", async (req, res, next) => {
-  console.log(req.params)
+
+  function generateSlug(title) {
+    return title.replace(/\s+/g, "_").replace(/\W/g, "");
+  }
+
+  Page.beforeValidate((userInstance, optionsObject) => {
+    userInstance.slug = generateSlug(userInstance.title).toLowerCase();
+  });
+
   const page = new Page({
     title: req.body.title,
-    slug: "temp-slug",
+    slug: req.body.slug,
     content: req.body.content,
     status: req.body.status
   });
   try {
     await page.save();
-    res.redirect("/")
-  }
-  catch (error) {
-    next(error)
+    res.redirect(`/wiki/${page.slug}`);
+  } catch (error) {
+    next(error);
   }
 });
 
@@ -28,5 +40,15 @@ router.get("/add", (req, res, next) => {
   res.send(addPage());
 });
 
+router.get("/:slug", async (req, res, next) => {
+  try {
+    const page = await Page.findOne({
+      where: { slug: req.params.slug }
+    });
+    res.send(wikiPage(page));
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router;

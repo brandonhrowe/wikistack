@@ -3,9 +3,9 @@ const db = new Sequelize('postgres://localhost:5432/wikistack', {
   logging: false
 });
 
-// db.authenticate().then(() => {
-//   console.log("connected to the database");
-// });
+
+
+// db.sync({force: true})
 
 
 const Page = db.define("page", {
@@ -40,6 +40,8 @@ const User = db.define("user", {
     allowNull: false
   }
 })
+
+
 
 
 module.exports = {
